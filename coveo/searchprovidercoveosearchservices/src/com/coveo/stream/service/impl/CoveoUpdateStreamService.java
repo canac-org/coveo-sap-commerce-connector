@@ -2,6 +2,7 @@ package com.coveo.stream.service.impl;
 
 import com.coveo.pushapiclient.CatalogSource;
 import com.coveo.pushapiclient.DocumentBuilder;
+import com.coveo.pushapiclient.PartialUpdateDocument;
 import com.coveo.pushapiclient.UpdateStreamService;
 import com.coveo.pushapiclient.exceptions.NoOpenFileContainerException;
 import com.coveo.searchservices.data.CoveoSource;
@@ -9,6 +10,7 @@ import com.coveo.stream.service.CoveoAbstractStreamService;
 import de.hybris.platform.core.Registry;
 
 import java.io.IOException;
+import java.util.List;
 
 public class CoveoUpdateStreamService extends CoveoAbstractStreamService<UpdateStreamService> {
 
@@ -33,7 +35,16 @@ public class CoveoUpdateStreamService extends CoveoAbstractStreamService<UpdateS
     }
 
     @Override
+    public void pushPartialDocument(List<PartialUpdateDocument> documents) throws IOException, InterruptedException {
+        for (PartialUpdateDocument partialUpdateDocument : documents) {
+            updateStreamService.addPartialUpdate(partialUpdateDocument);
+        }
+
+    }
+
+    @Override
     public void closeStream() throws IOException, InterruptedException, NoOpenFileContainerException {
         updateStreamService.close();
     }
+
 }

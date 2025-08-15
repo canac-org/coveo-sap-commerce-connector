@@ -2,16 +2,15 @@ package com.coveo.stream.service.impl;
 
 import com.coveo.pushapiclient.CatalogSource;
 import com.coveo.pushapiclient.DocumentBuilder;
+import com.coveo.pushapiclient.PartialUpdateDocument;
 import com.coveo.pushapiclient.StreamService;
-import com.coveo.pushapiclient.UpdateStreamService;
 import com.coveo.pushapiclient.exceptions.NoOpenStreamException;
 import com.coveo.searchservices.data.CoveoSource;
 import com.coveo.stream.service.CoveoAbstractStreamService;
 import de.hybris.platform.core.Registry;
 
 import java.io.IOException;
-
-import static com.coveo.constants.SearchprovidercoveosearchservicesConstants.COSAP_CONNECTOR_USER_AGENT;
+import java.util.List;
 
 public class CoveoRebuildStreamService extends CoveoAbstractStreamService<StreamService> {
 
@@ -36,7 +35,13 @@ public class CoveoRebuildStreamService extends CoveoAbstractStreamService<Stream
     }
 
     @Override
+    public void pushPartialDocument(List<PartialUpdateDocument> documents) throws IOException, InterruptedException {
+        throw new UnsupportedOperationException("Partial updates are not supported in rebuild streams");
+    }
+
+    @Override
     public void closeStream() throws NoOpenStreamException, IOException, InterruptedException {
         rebuildStreamService.close();
     }
+
 }
