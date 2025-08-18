@@ -212,7 +212,7 @@ public class CoveoProductStreamServiceStrategy<T extends CoveoStreamService> imp
         List<String> partialFieldsToUpdate = document.getFields().keySet().stream().filter(key -> !COVEO_DOCUMENT_ID_INDEX_ATTRIBUTE.equals(key) && !COVEO_NAME_INDEX_ATTRIBUTE.equals(key)).toList();
 
         for (String partialFieldToUpdate : partialFieldsToUpdate) {
-            Map<String, Object> values = resolveFieldValue(document, documentInfos);
+            Map<String, Object> values = resolvePartialFieldValue(document, documentInfos, partialFieldToUpdate);
             // Only fieldValueReplace is supported for now
             partialUpdateDocuments.add(new PartialUpdateDocument(documentInfos.documentId(), PartialUpdateOperator.FIELDVALUEREPLACE, partialFieldToUpdate, values.get(partialFieldToUpdate)));
         }
@@ -223,14 +223,33 @@ public class CoveoProductStreamServiceStrategy<T extends CoveoStreamService> imp
     private Map<String, Object> resolveFieldValue(SnDocument document, DocumentInfos documentInfo) {
         Map<String, Object> values = new HashMap<>();
         for (Map.Entry<String, Object> field : document.getFields().entrySet()) {
-            Object fieldValue = CoveoFieldValueResolverUtils.resolveFieldValue(field.getValue(), documentInfo.locale(), documentInfo.currency());
-            if (fieldValue != null && !Objects.equals(fieldValue, "")) {
-                values.put(field.getKey(), fieldValue);
-            } else if (LOG.isDebugEnabled()) {
-                LOG.debug("Field " + field.getKey() + " is empty or null, will not push this field for document " + documentInfo.documentId());
-            }
+            updateValues(values, field, documentInfo);
         }
         return values;
+    }
+
+    private Map<String, Object> resolvePartialFieldValue(SnDocument document, DocumentInfos documentInfo, String currentField) {
+        Map<String, Object> values = new HashMap<>();
+        List<String> fieldsToResolve = new ArrayList<>();
+        fieldsToResolve.add(currentField);
+        fieldsToResolve.add(COVEO_NAME_INDEX_ATTRIBUTE);
+        fieldsToResolve.add(COVEO_DOCUMENT_ID_INDEX_ATTRIBUTE);
+        for (Map.Entry<String, Object> field : document.getFields().entrySet()) {
+            if (!fieldsToResolve.contains(field.getKey())) {
+                continue;
+            }
+            updateValues(values, field, documentInfo);
+        }
+        return values;
+    }
+
+    private void updateValues(Map<String, Object> values, Map.Entry<String, Object> field, DocumentInfos documentInfo) {
+        Object fieldValue = CoveoFieldValueResolverUtils.resolveFieldValue(field.getValue(), documentInfo.locale(), documentInfo.currency());
+        if (fieldValue != null && !Objects.equals(fieldValue, "")) {
+            values.put(field.getKey(), fieldValue);
+        } else if (LOG.isDebugEnabled()) {
+            LOG.debug("Field " + field.getKey() + " is empty or null, will not push this field for document " + documentInfo.documentId());
+        }
     }
 
     private DocumentInfos getInfosAndValidateDocument(SnDocument document, String languageIsoCode, String currencyIsoCode) {
