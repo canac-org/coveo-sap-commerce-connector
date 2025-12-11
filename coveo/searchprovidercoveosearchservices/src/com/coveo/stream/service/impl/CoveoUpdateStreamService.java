@@ -3,6 +3,7 @@ package com.coveo.stream.service.impl;
 import com.coveo.pushapiclient.CatalogSource;
 import com.coveo.pushapiclient.DocumentBuilder;
 import com.coveo.pushapiclient.PartialUpdateDocument;
+import com.coveo.pushapiclient.ShallowMergeDocument;
 import com.coveo.pushapiclient.UpdateStreamService;
 import com.coveo.pushapiclient.exceptions.NoOpenFileContainerException;
 import com.coveo.searchservices.data.CoveoSource;
@@ -25,7 +26,8 @@ public class CoveoUpdateStreamService extends CoveoAbstractStreamService<UpdateS
     @Override
     protected UpdateStreamService createStreamService(CatalogSource catalogSource, String[] userAgents) {
         final UpdateStreamService updateStreamService = Registry.getApplicationContext().getBean(UpdateStreamService.class);
-        updateStreamService.init(catalogSource, userAgents);
+        // Initialize with catalog queue support (true) to enable shallow merge
+        updateStreamService.init(catalogSource, userAgents, true);
         return updateStreamService;
     }
 
@@ -39,7 +41,13 @@ public class CoveoUpdateStreamService extends CoveoAbstractStreamService<UpdateS
         for (PartialUpdateDocument partialUpdateDocument : documents) {
             updateStreamService.addPartialUpdate(partialUpdateDocument);
         }
+    }
 
+    @Override
+    public void pushShallowMergeDocument(List<ShallowMergeDocument> documents) throws IOException, InterruptedException {
+        for (ShallowMergeDocument shallowMergeDocument : documents) {
+            updateStreamService.addShallowMerge(shallowMergeDocument);
+        }
     }
 
     @Override

@@ -2,6 +2,8 @@ package com.coveo.stream.service;
 
 import com.coveo.pushapiclient.CatalogSource;
 import com.coveo.pushapiclient.DocumentBuilder;
+import com.coveo.pushapiclient.PartialUpdateDocument;
+import com.coveo.pushapiclient.ShallowMergeDocument;
 import com.coveo.pushapiclient.exceptions.NoOpenFileContainerException;
 import com.coveo.pushapiclient.exceptions.NoOpenStreamException;
 import com.coveo.searchservices.data.CoveoSource;
@@ -10,8 +12,9 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.util.List;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 @UnitTest
 public class CoveoAbstractStreamServiceTest {
@@ -37,7 +40,7 @@ public class CoveoAbstractStreamServiceTest {
     @Test
     public void testGetCoveoSource() {
         TestCoveoAbstractStreamService testCoveoAbstractStreamService = new TestCoveoAbstractStreamService();
-        testCoveoAbstractStreamService.init(coveoSource, new String[]{});
+        testCoveoAbstractStreamService.init(coveoSource, new String[] {});
         assertEquals(coveoSource, testCoveoAbstractStreamService.getCoveoSource());
     }
 
@@ -63,6 +66,16 @@ public class CoveoAbstractStreamServiceTest {
 
         @Override
         public void closeStream() throws NoOpenStreamException, IOException, InterruptedException, NoOpenFileContainerException {
+
+        }
+
+        @Override
+        public void pushPartialDocument(List<PartialUpdateDocument> documents) throws IOException, InterruptedException {
+
+        }
+
+        @Override
+        public void pushShallowMergeDocument(List<ShallowMergeDocument> documents) throws IOException, InterruptedException {
 
         }
     }

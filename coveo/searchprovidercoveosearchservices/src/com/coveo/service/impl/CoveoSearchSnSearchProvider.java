@@ -1,9 +1,9 @@
 package com.coveo.service.impl;
 
 import com.coveo.constants.SearchprovidercoveosearchservicesConstants;
-import com.coveo.searchservices.data.CoveoSearchSnSearchProviderConfiguration;
 import com.coveo.pushapiclient.exceptions.NoOpenFileContainerException;
 import com.coveo.pushapiclient.exceptions.NoOpenStreamException;
+import com.coveo.searchservices.data.CoveoSearchSnSearchProviderConfiguration;
 import com.coveo.stream.service.CoveoStreamServiceStrategy;
 import de.hybris.platform.searchservices.core.SnException;
 import de.hybris.platform.searchservices.core.service.SnContext;
@@ -27,13 +27,7 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Required;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 public class CoveoSearchSnSearchProvider extends AbstractSnSearchProvider<CoveoSearchSnSearchProviderConfiguration> implements InitializingBean {
 
@@ -44,6 +38,19 @@ public class CoveoSearchSnSearchProvider extends AbstractSnSearchProvider<CoveoS
     private final List<SnIndexerOperation> snIndexerOperations = new ArrayList<>();
 
     private ConfigurationService configurationService;
+
+    private static SnIndexerOperation createSnIndexerOperation(SnContext context, SnIndexerOperationType indexerOperationType) {
+        SnIndexerOperation indexerOperation = new SnIndexerOperation();
+        // Here we are using the combination of the index type id and the operation type code to create a unique index id
+        // This will then be used to identify the stream service to use for the operation within a map
+        indexerOperation.setId(context.getIndexType().getId() + indexerOperationType.getCode());
+        // We need to set this the same as the ID because this is the value passed into the commit method
+        indexerOperation.setIndexId(indexerOperation.getId());
+        indexerOperation.setIndexTypeId(context.getIndexType().getId());
+        indexerOperation.setOperationType(indexerOperationType);
+        indexerOperation.setStatus(SnIndexerOperationStatus.RUNNING);
+        return indexerOperation;
+    }
 
     @Override
     public void afterPropertiesSet() throws Exception {
@@ -67,7 +74,6 @@ public class CoveoSearchSnSearchProvider extends AbstractSnSearchProvider<CoveoS
         return snIndex;
     }
 
-
     @Override
     public void deleteIndex(SnContext context, String indexId) throws SnException {
         LOG.warn("Delete index method is not implemented");
@@ -77,20 +83,20 @@ public class CoveoSearchSnSearchProvider extends AbstractSnSearchProvider<CoveoS
         if (LOG.isDebugEnabled()) {
             LOG.debug("Getting Indexer Operation with id " + indexerOperationId);
         }
-        return snIndexerOperations.stream()
-                .filter(op -> op.getId().equals(indexerOperationId))
-                .findFirst();
+        return snIndexerOperations.stream().filter(op -> op.getId().equals(indexerOperationId)).findFirst();
     }
 
     @Override
     public SnIndexerOperation createIndexerOperation(SnContext context, SnIndexerOperationType indexerOperationType, int totalItems) throws SnException {
-        if(LOG.isDebugEnabled()) LOG.debug(String.format("Starting to create the indexer operation for the index type %s and operation type %s", context.getIndexType().getId(), indexerOperationType.getCode()));
+        if (LOG.isDebugEnabled())
+            LOG.debug(String.format("Starting to create the indexer operation for the index type %s and operation type %s", context.getIndexType().getId(), indexerOperationType.getCode()));
         SnIndexerOperation indexerOperation = createSnIndexerOperation(context, indexerOperationType);
 
         String composedType = context.getIndexType().getItemComposedType();
         String[] availabilityTypes = configurationService.getConfiguration().getString(SearchprovidercoveosearchservicesConstants.SUPPORTED_AVAILABILITY_TYPES_CODE).split(",");
 
-        if(LOG.isDebugEnabled()) LOG.debug(String.format("Availability types are %s and composed type is %s", Arrays.toString(availabilityTypes), composedType));
+        if (LOG.isDebugEnabled())
+            LOG.debug(String.format("Availability types are %s and composed type is %s", Arrays.toString(availabilityTypes), composedType));
         if (availabilityTypes != null && Arrays.asList(availabilityTypes).contains(composedType)) {
             if (indexerOperationType == SnIndexerOperationType.FULL) {
                 streamServiceStrategyMap.put(indexerOperation.getIndexId(), (CoveoStreamServiceStrategy) context.getAttributes().get(SearchprovidercoveosearchservicesConstants.COVEO_AVAILABILITY_REBUILD_STREAM_SERVICES_KEY));
@@ -120,25 +126,11 @@ public class CoveoSearchSnSearchProvider extends AbstractSnSearchProvider<CoveoS
         return indexerOperation;
     }
 
-    private static SnIndexerOperation createSnIndexerOperation(SnContext context, SnIndexerOperationType indexerOperationType) {
-        SnIndexerOperation indexerOperation = new SnIndexerOperation();
-        // Here we are using the combination of the index type id and the operation type code to create a unique index id
-        // This will then be used to identify the stream service to use for the operation within a map
-        indexerOperation.setId(context.getIndexType().getId() + indexerOperationType.getCode());
-        // We need to set this the same as the ID because this is the value passed into the commit method
-        indexerOperation.setIndexId(indexerOperation.getId());
-        indexerOperation.setIndexTypeId(context.getIndexType().getId());
-        indexerOperation.setOperationType(indexerOperationType);
-        indexerOperation.setStatus(SnIndexerOperationStatus.RUNNING);
-        return indexerOperation;
-    }
-
     @Override
     public SnIndexerOperation updateIndexerOperationStatus(SnContext context, String indexerOperationId, SnIndexerOperationStatus status, String errorMessage) throws SnException {
         LOG.warn("Update indexer operation method is not implemented");
         return null;
     }
-
 
     @Override
     public void completeIndexerOperation(SnContext context, String indexerOperationId) throws SnException {
@@ -209,11 +201,12 @@ public class CoveoSearchSnSearchProvider extends AbstractSnSearchProvider<CoveoS
     }
 
     private void closeService(SnContext context, String indexId) throws SnException {
-        if (LOG.isDebugEnabled()) LOG.debug("Closing Service");
+        if (LOG.isDebugEnabled())
+            LOG.debug("Closing Service");
         try {
             CoveoStreamServiceStrategy streamServiceStrategy = streamServiceStrategyMap.get(indexId);
             streamServiceStrategy.closeServices();
-        } catch (IOException | InterruptedException| NoOpenStreamException | NoOpenFileContainerException exception) {
+        } catch (IOException | InterruptedException | NoOpenStreamException | NoOpenFileContainerException exception) {
             LOG.error("There was an issue closing one of the streams. We will continue to close the remaining streams", exception);
         }
     }

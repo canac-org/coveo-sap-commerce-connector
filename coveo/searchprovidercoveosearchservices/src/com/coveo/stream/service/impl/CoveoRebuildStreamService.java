@@ -3,6 +3,7 @@ package com.coveo.stream.service.impl;
 import com.coveo.pushapiclient.CatalogSource;
 import com.coveo.pushapiclient.DocumentBuilder;
 import com.coveo.pushapiclient.PartialUpdateDocument;
+import com.coveo.pushapiclient.ShallowMergeDocument;
 import com.coveo.pushapiclient.StreamService;
 import com.coveo.pushapiclient.exceptions.NoOpenStreamException;
 import com.coveo.searchservices.data.CoveoSource;
@@ -37,6 +38,11 @@ public class CoveoRebuildStreamService extends CoveoAbstractStreamService<Stream
     @Override
     public void pushPartialDocument(List<PartialUpdateDocument> documents) throws IOException, InterruptedException {
         throw new UnsupportedOperationException("Partial updates are not supported in rebuild streams");
+    }
+
+    @Override
+    public void pushShallowMergeDocument(List<ShallowMergeDocument> documents) throws IOException, InterruptedException {
+        throw new UnsupportedOperationException("Shallow merge is not supported in rebuild streams");
     }
 
     @Override

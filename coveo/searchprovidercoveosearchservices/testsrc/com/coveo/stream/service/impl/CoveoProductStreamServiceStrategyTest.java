@@ -675,4 +675,139 @@ public class CoveoProductStreamServiceStrategyTest {
             assertEquals(SnDocumentOperationStatus.FAILED, responses.get(0).getStatus());
         }
     }
+
+    @Test
+    public void testPushDocuments_ShallowMerge() throws IOException, InterruptedException {
+        List<SnDocumentBatchOperationRequest> documents = new ArrayList<>();
+        SnDocumentBatchOperationRequest documentA = new SnDocumentBatchOperationRequest();
+        documentA.setDocument(createDocumentFields("nameA", "codeA", CoveoObjectTypeSnIndexerValueProvider.PRODUCT_VARIANT_TYPE));
+        documentA.setOperationType(SnDocumentOperationType.SHALLOW_MERGE);
+        documents.add(documentA);
+
+        try (MockedStatic<CoveoFieldValueResolverUtils> mockedStatic = mockStatic(CoveoFieldValueResolverUtils.class)) {
+            mockedStatic.when(() -> CoveoFieldValueResolverUtils.resolveFieldValue(eq("coveoDocumentId"), anyMap(), any(Locale.class), any(Currency.class))).thenReturn("dummyDocumentId");
+            mockedStatic.when(() -> CoveoFieldValueResolverUtils.resolveFieldValue(eq("name"), anyMap(), any(Locale.class), any(Currency.class))).thenReturn("dummyNameId");
+            mockedStatic.when(() -> CoveoFieldValueResolverUtils.resolveFieldValue(eq("code"), anyMap(), any(Locale.class), any(Currency.class))).thenReturn("dummyCode");
+            mockedStatic.when(() -> CoveoFieldValueResolverUtils.resolveFieldValue(eq("objectType"), anyMap(), any(Locale.class), any(Currency.class))).thenReturn("productVariant");
+
+            List<SnDocumentBatchOperationResponse> responses = coveoProductStreamServiceStrategy.pushDocuments(documents);
+            verify(coveoAbstractStreamServiceUS, times(1)).pushShallowMergeDocument(any());
+            verify(coveoAbstractStreamServiceFR, times(1)).pushShallowMergeDocument(any());
+            verify(coveoAbstractStreamServiceDE, times(1)).pushShallowMergeDocument(any());
+            verify(coveoAbstractStreamServiceAvailability, times(0)).pushShallowMergeDocument(any());
+            assertEquals(documents.size(), responses.size());
+        }
+    }
+
+    @Test
+    public void testPushDocuments_ShallowMerge_MissingDocumentId() throws IOException, InterruptedException {
+        List<SnDocumentBatchOperationRequest> documents = new ArrayList<>();
+        SnDocumentBatchOperationRequest documentA = new SnDocumentBatchOperationRequest();
+        documentA.setDocument(createDocumentFields("nameA", "codeA", CoveoObjectTypeSnIndexerValueProvider.PRODUCT_VARIANT_TYPE));
+        documentA.setOperationType(SnDocumentOperationType.SHALLOW_MERGE);
+        documents.add(documentA);
+
+        try (MockedStatic<CoveoFieldValueResolverUtils> mockedStatic = mockStatic(CoveoFieldValueResolverUtils.class)) {
+            mockedStatic.when(() -> CoveoFieldValueResolverUtils.resolveFieldValue(eq("coveoDocumentId"), anyMap(), any(Locale.class), any(Currency.class))).thenReturn("");
+            mockedStatic.when(() -> CoveoFieldValueResolverUtils.resolveFieldValue(eq("name"), anyMap(), any(Locale.class), any(Currency.class))).thenReturn("dummyNameId");
+            mockedStatic.when(() -> CoveoFieldValueResolverUtils.resolveFieldValue(eq("code"), anyMap(), any(Locale.class), any(Currency.class))).thenReturn("dummyCode");
+
+            List<SnDocumentBatchOperationResponse> responses = coveoProductStreamServiceStrategy.pushDocuments(documents);
+            verify(coveoAbstractStreamServiceUS, times(0)).pushShallowMergeDocument(any());
+            verify(coveoAbstractStreamServiceFR, times(0)).pushShallowMergeDocument(any());
+            verify(coveoAbstractStreamServiceDE, times(0)).pushShallowMergeDocument(any());
+            assertEquals(documents.size(), responses.size());
+        }
+    }
+
+    @Test
+    public void testPushDocuments_ShallowMerge_MissingDocumentName() throws IOException, InterruptedException {
+        List<SnDocumentBatchOperationRequest> documents = new ArrayList<>();
+        SnDocumentBatchOperationRequest documentA = new SnDocumentBatchOperationRequest();
+        documentA.setDocument(createDocumentFields("", "codeA", CoveoObjectTypeSnIndexerValueProvider.PRODUCT_VARIANT_TYPE));
+        documentA.setOperationType(SnDocumentOperationType.SHALLOW_MERGE);
+        documents.add(documentA);
+
+        try (MockedStatic<CoveoFieldValueResolverUtils> mockedStatic = mockStatic(CoveoFieldValueResolverUtils.class)) {
+            mockedStatic.when(() -> CoveoFieldValueResolverUtils.resolveFieldValue(eq("coveoDocumentId"), anyMap(), any(Locale.class), any(Currency.class))).thenReturn("dummyDocumentId");
+            mockedStatic.when(() -> CoveoFieldValueResolverUtils.resolveFieldValue(eq("name"), anyMap(), any(Locale.class), any(Currency.class))).thenReturn("");
+            mockedStatic.when(() -> CoveoFieldValueResolverUtils.resolveFieldValue(eq("code"), anyMap(), any(Locale.class), any(Currency.class))).thenReturn("dummyCode");
+
+            List<SnDocumentBatchOperationResponse> responses = coveoProductStreamServiceStrategy.pushDocuments(documents);
+            verify(coveoAbstractStreamServiceUS, times(0)).pushShallowMergeDocument(any());
+            verify(coveoAbstractStreamServiceFR, times(0)).pushShallowMergeDocument(any());
+            verify(coveoAbstractStreamServiceDE, times(0)).pushShallowMergeDocument(any());
+            assertEquals(documents.size(), responses.size());
+        }
+    }
+
+    @Test
+    public void testPushDocuments_ShallowMerge_WithException() throws IOException, InterruptedException {
+        List<SnDocumentBatchOperationRequest> documents = new ArrayList<>();
+        SnDocumentBatchOperationRequest documentA = new SnDocumentBatchOperationRequest();
+        documentA.setDocument(createDocumentFields("nameA", "codeA", CoveoObjectTypeSnIndexerValueProvider.PRODUCT_VARIANT_TYPE));
+        documentA.setOperationType(SnDocumentOperationType.SHALLOW_MERGE);
+        documents.add(documentA);
+
+        doThrow(new IOException("Test exception")).when(coveoAbstractStreamServiceUS).pushShallowMergeDocument(any());
+        doThrow(new IOException("Test exception")).when(coveoAbstractStreamServiceFR).pushShallowMergeDocument(any());
+        doThrow(new IOException("Test exception")).when(coveoAbstractStreamServiceDE).pushShallowMergeDocument(any());
+
+        try (MockedStatic<CoveoFieldValueResolverUtils> mockedStatic = mockStatic(CoveoFieldValueResolverUtils.class)) {
+            mockedStatic.when(() -> CoveoFieldValueResolverUtils.resolveFieldValue(eq("coveoDocumentId"), anyMap(), any(Locale.class), any(Currency.class))).thenReturn("dummyDocumentId");
+            mockedStatic.when(() -> CoveoFieldValueResolverUtils.resolveFieldValue(eq("name"), anyMap(), any(Locale.class), any(Currency.class))).thenReturn("dummyNameId");
+            mockedStatic.when(() -> CoveoFieldValueResolverUtils.resolveFieldValue(eq("code"), anyMap(), any(Locale.class), any(Currency.class))).thenReturn("dummyCode");
+            mockedStatic.when(() -> CoveoFieldValueResolverUtils.resolveFieldValue(eq("objectType"), anyMap(), any(Locale.class), any(Currency.class))).thenReturn("productVariant");
+
+            List<SnDocumentBatchOperationResponse> responses = coveoProductStreamServiceStrategy.pushDocuments(documents);
+            verify(coveoAbstractStreamServiceUS, times(1)).pushShallowMergeDocument(any());
+            verify(coveoAbstractStreamServiceFR, times(1)).pushShallowMergeDocument(any());
+            verify(coveoAbstractStreamServiceDE, times(1)).pushShallowMergeDocument(any());
+            assertEquals(documents.size(), responses.size());
+            assertEquals(SnDocumentOperationStatus.FAILED, responses.get(0).getStatus());
+        }
+    }
+
+    @Test
+    public void testPushDocuments_MixedOperationTypes_WithShallowMerge() throws IOException, InterruptedException {
+        List<SnDocumentBatchOperationRequest> documents = new ArrayList<>();
+
+        // Regular document
+        SnDocumentBatchOperationRequest documentA = new SnDocumentBatchOperationRequest();
+        documentA.setDocument(createDocumentFields("nameA", "codeA", CoveoObjectTypeSnIndexerValueProvider.PRODUCT_VARIANT_TYPE));
+        documentA.setOperationType(SnDocumentOperationType.CREATE);
+        
+        // Partial update document
+        SnDocumentBatchOperationRequest documentB = new SnDocumentBatchOperationRequest();
+        documentB.setDocument(createDocumentFields("nameB", "codeB", CoveoObjectTypeSnIndexerValueProvider.PRODUCT_VARIANT_TYPE));
+        documentB.setOperationType(SnDocumentOperationType.PARTIAL_UPDATE);
+        
+        // Shallow merge document
+        SnDocumentBatchOperationRequest documentC = new SnDocumentBatchOperationRequest();
+        documentC.setDocument(createDocumentFields("nameC", "codeC", CoveoObjectTypeSnIndexerValueProvider.PRODUCT_VARIANT_TYPE));
+        documentC.setOperationType(SnDocumentOperationType.SHALLOW_MERGE);
+
+        documents.add(documentA);
+        documents.add(documentB);
+        documents.add(documentC);
+
+        try (MockedStatic<CoveoFieldValueResolverUtils> mockedStatic = mockStatic(CoveoFieldValueResolverUtils.class)) {
+            mockedStatic.when(() -> CoveoFieldValueResolverUtils.resolveFieldValue(eq("coveoDocumentId"), anyMap(), any(Locale.class), any(Currency.class))).thenReturn("dummyDocumentId");
+            mockedStatic.when(() -> CoveoFieldValueResolverUtils.resolveFieldValue(eq("name"), anyMap(), any(Locale.class), any(Currency.class))).thenReturn("dummyNameId");
+            mockedStatic.when(() -> CoveoFieldValueResolverUtils.resolveFieldValue(eq("code"), anyMap(), any(Locale.class), any(Currency.class))).thenReturn("dummyCode");
+            mockedStatic.when(() -> CoveoFieldValueResolverUtils.resolveFieldValue(eq("objectType"), anyMap(), any(Locale.class), any(Currency.class))).thenReturn("productVariant");
+
+            List<SnDocumentBatchOperationResponse> responses = coveoProductStreamServiceStrategy.pushDocuments(documents);
+            verify(coveoAbstractStreamServiceUS, times(1)).pushDocument(any());
+            verify(coveoAbstractStreamServiceUS, times(1)).pushPartialDocument(any());
+            verify(coveoAbstractStreamServiceUS, times(1)).pushShallowMergeDocument(any());
+            verify(coveoAbstractStreamServiceFR, times(1)).pushDocument(any());
+            verify(coveoAbstractStreamServiceFR, times(1)).pushPartialDocument(any());
+            verify(coveoAbstractStreamServiceFR, times(1)).pushShallowMergeDocument(any());
+            verify(coveoAbstractStreamServiceDE, times(1)).pushDocument(any());
+            verify(coveoAbstractStreamServiceDE, times(1)).pushPartialDocument(any());
+            verify(coveoAbstractStreamServiceDE, times(1)).pushShallowMergeDocument(any());
+            assertEquals(documents.size(), responses.size());
+        }
+    }
 }
