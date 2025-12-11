@@ -34,10 +34,10 @@ public class PlatformClient {
    */
   public PlatformClient(String apiKey, String organizationId) {
     this(
-        apiKey,
-        organizationId,
-        new PlatformUrlBuilder().build(),
-        new BackoffOptionsBuilder().build());
+            apiKey,
+            organizationId,
+            new PlatformUrlBuilder().build(),
+            new BackoffOptionsBuilder().build());
   }
 
   /**
@@ -76,7 +76,7 @@ public class PlatformClient {
    * @param options The configuration options for exponential backoff.
    */
   public PlatformClient(
-      String apiKey, String organizationId, PlatformUrl platformUrl, BackoffOptions options) {
+          String apiKey, String organizationId, PlatformUrl platformUrl, BackoffOptions options) {
     this.apiKey = apiKey;
     this.organizationId = organizationId;
     this.api = new ApiCore(options);
@@ -107,7 +107,7 @@ public class PlatformClient {
    * @param options The configuration options for exponential backoff.
    */
   public PlatformClient(
-      String apiKey, String organizationId, HttpClient httpClient, BackoffOptions options) {
+          String apiKey, String organizationId, HttpClient httpClient, BackoffOptions options) {
     this.apiKey = apiKey;
     this.organizationId = organizationId;
     this.api = new ApiCore(httpClient, options);
@@ -134,7 +134,7 @@ public class PlatformClient {
   /**
    * Create a new push source
    *
-   * @deprecated Please use {@link PlatformClient#createSource(String, SourceType,
+   * @deprecated Please use {@link com.coveo.pushapiclient.PlatformClient#createSource(String, SourceType,
    *     SourceVisibility)} instead
    * @param name
    * @param sourceVisibility
@@ -144,7 +144,7 @@ public class PlatformClient {
    */
   @Deprecated
   public HttpResponse<String> createSource(String name, SourceVisibility sourceVisibility)
-      throws IOException, InterruptedException {
+          throws IOException, InterruptedException {
     return createSource(name, SourceType.PUSH, sourceVisibility);
   }
 
@@ -161,22 +161,22 @@ public class PlatformClient {
    * @throws InterruptedException
    */
   public HttpResponse<String> createSource(
-      String name, final SourceType sourceType, SourceVisibility sourceVisibility)
-      throws IOException, InterruptedException {
+          String name, final SourceType sourceType, SourceVisibility sourceVisibility)
+          throws IOException, InterruptedException {
     String[] headers =
-        this.getHeaders(this.getAuthorizationHeader(), this.getContentTypeApplicationJSONHeader());
+            this.getHeaders(this.getAuthorizationHeader(), this.getContentTypeApplicationJSONHeader());
 
     String json =
-        this.toJSON(
-            new HashMap<>() {
-              {
-                put("sourceType", sourceType.toString());
-                put("pushEnabled", sourceType.isPushEnabled());
-                put("streamEnabled", sourceType.isStreamEnabled());
-                put("name", name);
-                put("sourceVisibility", sourceVisibility);
-              }
-            });
+            this.toJSON(
+                    new HashMap<>() {
+                      {
+                        put("sourceType", sourceType.toString());
+                        put("pushEnabled", sourceType.isPushEnabled());
+                        put("streamEnabled", sourceType.isStreamEnabled());
+                        put("name", name);
+                        put("sourceVisibility", sourceVisibility);
+                      }
+                    });
 
     URI uri = URI.create(this.getBaseSourceURL());
 
@@ -195,10 +195,10 @@ public class PlatformClient {
    * @throws InterruptedException
    */
   public HttpResponse<String> createOrUpdateSecurityIdentity(
-      String securityProviderId, SecurityIdentityModel securityIdentityModel)
-      throws IOException, InterruptedException {
+          String securityProviderId, SecurityIdentityModel securityIdentityModel)
+          throws IOException, InterruptedException {
     String[] headers =
-        this.getHeaders(this.getAuthorizationHeader(), this.getContentTypeApplicationJSONHeader());
+            this.getHeaders(this.getAuthorizationHeader(), this.getContentTypeApplicationJSONHeader());
     URI uri = URI.create(this.getBaseProviderURL(securityProviderId) + "/permissions");
 
     String json = new Gson().toJson(securityIdentityModel);
@@ -218,10 +218,10 @@ public class PlatformClient {
    * @throws InterruptedException
    */
   public HttpResponse<String> createOrUpdateSecurityIdentityAlias(
-      String securityProviderId, SecurityIdentityAliasModel securityIdentityAlias)
-      throws IOException, InterruptedException {
+          String securityProviderId, SecurityIdentityAliasModel securityIdentityAlias)
+          throws IOException, InterruptedException {
     String[] headers =
-        this.getHeaders(this.getAuthorizationHeader(), this.getContentTypeApplicationJSONHeader());
+            this.getHeaders(this.getAuthorizationHeader(), this.getContentTypeApplicationJSONHeader());
     URI uri = URI.create(this.getBaseProviderURL(securityProviderId) + "/mappings");
 
     String json = new Gson().toJson(securityIdentityAlias);
@@ -240,10 +240,10 @@ public class PlatformClient {
    * @throws InterruptedException
    */
   public HttpResponse<String> deleteSecurityIdentity(
-      String securityProviderId, SecurityIdentityDelete securityIdentityToDelete)
-      throws IOException, InterruptedException {
+          String securityProviderId, SecurityIdentityDelete securityIdentityToDelete)
+          throws IOException, InterruptedException {
     String[] headers =
-        this.getHeaders(this.getAuthorizationHeader(), this.getContentTypeApplicationJSONHeader());
+            this.getHeaders(this.getAuthorizationHeader(), this.getContentTypeApplicationJSONHeader());
     URI uri = URI.create(this.getBaseProviderURL(securityProviderId) + "/permissions");
 
     String json = new Gson().toJson(securityIdentityToDelete);
@@ -262,17 +262,17 @@ public class PlatformClient {
    * @throws InterruptedException
    */
   public HttpResponse<String> deleteOldSecurityIdentities(
-      String securityProviderId, SecurityIdentityDeleteOptions batchDelete)
-      throws IOException, InterruptedException {
+          String securityProviderId, SecurityIdentityDeleteOptions batchDelete)
+          throws IOException, InterruptedException {
     String[] headers =
-        this.getHeaders(this.getAuthorizationHeader(), this.getContentTypeApplicationJSONHeader());
+            this.getHeaders(this.getAuthorizationHeader(), this.getContentTypeApplicationJSONHeader());
 
     URI uri =
-        URI.create(
-            this.getBaseProviderURL(securityProviderId)
-                + String.format(
-                    "/permissions/olderthan?queueDelay=%s%s",
-                    batchDelete.getQueueDelay(), appendOrderingId(batchDelete.getOrderingId())));
+            URI.create(
+                    this.getBaseProviderURL(securityProviderId)
+                            + String.format(
+                            "/permissions/olderthan?queueDelay=%s%s",
+                            batchDelete.getQueueDelay(), appendOrderingId(batchDelete.getOrderingId())));
 
     return this.api.delete(uri, headers);
   }
@@ -301,17 +301,17 @@ public class PlatformClient {
    * @throws InterruptedException
    */
   public HttpResponse<String> manageSecurityIdentities(
-      String securityProviderId, SecurityIdentityBatchConfig batchConfig)
-      throws IOException, InterruptedException {
+          String securityProviderId, SecurityIdentityBatchConfig batchConfig)
+          throws IOException, InterruptedException {
     String[] headers =
-        this.getHeaders(this.getAuthorizationHeader(), this.getContentTypeApplicationJSONHeader());
+            this.getHeaders(this.getAuthorizationHeader(), this.getContentTypeApplicationJSONHeader());
 
     URI uri =
-        URI.create(
-            this.getBaseProviderURL(securityProviderId)
-                + String.format(
-                    "/permissions/batch?fileId=%s%s",
-                    batchConfig.getFileId(), appendOrderingId(batchConfig.getOrderingId())));
+            URI.create(
+                    this.getBaseProviderURL(securityProviderId)
+                            + String.format(
+                            "/permissions/batch?fileId=%s%s",
+                            batchConfig.getFileId(), appendOrderingId(batchConfig.getOrderingId())));
 
     return this.api.put(uri, headers, HttpRequest.BodyPublishers.noBody());
   }
@@ -329,17 +329,17 @@ public class PlatformClient {
    * @throws InterruptedException
    */
   public HttpResponse<String> pushDocument(
-      String sourceId, String documentJSON, String documentId, CompressionType compressionType)
-      throws IOException, InterruptedException {
+          String sourceId, String documentJSON, String documentId, CompressionType compressionType)
+          throws IOException, InterruptedException {
     String[] headers =
-        this.getHeaders(this.getAuthorizationHeader(), this.getContentTypeApplicationJSONHeader());
+            this.getHeaders(this.getAuthorizationHeader(), this.getContentTypeApplicationJSONHeader());
 
     URI uri =
-        URI.create(
-            this.getBasePushURL()
-                + String.format(
-                    "/sources/%s/documents?documentId=%s&compressionType=%s",
-                    sourceId, documentId, compressionType.toString()));
+            URI.create(
+                    this.getBasePushURL()
+                            + String.format(
+                            "/sources/%s/documents?documentId=%s&compressionType=%s",
+                            sourceId, documentId, compressionType.toString()));
 
     return this.api.put(uri, headers, HttpRequest.BodyPublishers.ofString(documentJSON));
   }
@@ -357,52 +357,52 @@ public class PlatformClient {
    * @throws InterruptedException
    */
   public HttpResponse<String> deleteDocument(
-      String sourceId, String documentId, Boolean deleteChildren)
-      throws IOException, InterruptedException {
+          String sourceId, String documentId, Boolean deleteChildren)
+          throws IOException, InterruptedException {
     String[] headers =
-        this.getHeaders(this.getAuthorizationHeader(), this.getContentTypeApplicationJSONHeader());
+            this.getHeaders(this.getAuthorizationHeader(), this.getContentTypeApplicationJSONHeader());
 
     URI uri =
-        URI.create(
-            this.getBasePushURL()
-                + String.format(
-                    "/sources/%s/documents?documentId=%s&deleteChildren=%s",
-                    sourceId, documentId, deleteChildren));
+            URI.create(
+                    this.getBasePushURL()
+                            + String.format(
+                            "/sources/%s/documents?documentId=%s&deleteChildren=%s",
+                            sourceId, documentId, deleteChildren));
 
     return this.api.delete(uri, headers);
   }
 
   public HttpResponse<String> openStream(String sourceId) throws IOException, InterruptedException {
     String[] headers =
-        this.getHeaders(this.getAuthorizationHeader(), this.getContentTypeApplicationJSONHeader());
+            this.getHeaders(this.getAuthorizationHeader(), this.getContentTypeApplicationJSONHeader());
 
     URI uri =
-        URI.create(this.getBasePushURL() + String.format("/sources/%s/stream/open", sourceId));
+            URI.create(this.getBasePushURL() + String.format("/sources/%s/stream/open", sourceId));
 
     return this.api.post(uri, headers);
   }
 
   public HttpResponse<String> closeStream(String sourceId, String streamId)
-      throws IOException, InterruptedException {
+          throws IOException, InterruptedException {
     String[] headers =
-        this.getHeaders(this.getAuthorizationHeader(), this.getContentTypeApplicationJSONHeader());
+            this.getHeaders(this.getAuthorizationHeader(), this.getContentTypeApplicationJSONHeader());
     URI uri =
-        URI.create(
-            this.getBasePushURL()
-                + String.format("/sources/%s/stream/%s/close", sourceId, streamId));
+            URI.create(
+                    this.getBasePushURL()
+                            + String.format("/sources/%s/stream/%s/close", sourceId, streamId));
 
     return this.api.post(uri, headers);
   }
 
   public HttpResponse<String> requireStreamChunk(String sourceId, String streamId)
-      throws IOException, InterruptedException {
+          throws IOException, InterruptedException {
     String[] headers =
-        this.getHeaders(this.getAuthorizationHeader(), this.getContentTypeApplicationJSONHeader());
+            this.getHeaders(this.getAuthorizationHeader(), this.getContentTypeApplicationJSONHeader());
 
     URI uri =
-        URI.create(
-            this.getBasePushURL()
-                + String.format("/sources/%s/stream/%s/chunk", sourceId, streamId));
+            URI.create(
+                    this.getBasePushURL()
+                            + String.format("/sources/%s/stream/%s/chunk", sourceId, streamId));
 
     return this.api.post(uri, headers);
   }
@@ -417,7 +417,7 @@ public class PlatformClient {
    */
   public HttpResponse<String> createFileContainer() throws IOException, InterruptedException {
     String[] headers =
-        this.getHeaders(this.getAuthorizationHeader(), this.getContentTypeApplicationJSONHeader());
+            this.getHeaders(this.getAuthorizationHeader(), this.getContentTypeApplicationJSONHeader());
 
     URI uri = URI.create(this.getBasePushURL() + "/files");
 
@@ -437,12 +437,12 @@ public class PlatformClient {
    * @throws InterruptedException
    */
   public HttpResponse<String> uploadContentToFileContainer(
-      FileContainer fileContainer, String batchUpdateJson)
-      throws IOException, InterruptedException {
+          FileContainer fileContainer, String batchUpdateJson)
+          throws IOException, InterruptedException {
     String[] headers =
-        fileContainer.requiredHeaders.entrySet().stream()
-            .flatMap(entry -> Stream.of(entry.getKey(), entry.getValue()))
-            .toArray(String[]::new);
+            fileContainer.requiredHeaders.entrySet().stream()
+                    .flatMap(entry -> Stream.of(entry.getKey(), entry.getValue()))
+                    .toArray(String[]::new);
 
     URI uri = URI.create(fileContainer.uploadUri);
 
@@ -462,14 +462,14 @@ public class PlatformClient {
    * @throws InterruptedException
    */
   public HttpResponse<String> pushFileContainerContent(String sourceId, FileContainer fileContainer)
-      throws IOException, InterruptedException {
+          throws IOException, InterruptedException {
     String[] headers =
-        this.getHeaders(this.getAuthorizationHeader(), this.getContentTypeApplicationJSONHeader());
+            this.getHeaders(this.getAuthorizationHeader(), this.getContentTypeApplicationJSONHeader());
     URI uri =
-        URI.create(
-            this.getBasePushURL()
-                + String.format(
-                    "/sources/%s/documents/batch?fileId=%s", sourceId, fileContainer.fileId));
+            URI.create(
+                    this.getBasePushURL()
+                            + String.format(
+                            "/sources/%s/documents/batch?fileId=%s", sourceId, fileContainer.fileId));
 
     return this.api.put(uri, headers, HttpRequest.BodyPublishers.ofString(""));
   }
@@ -485,14 +485,38 @@ public class PlatformClient {
    * @throws InterruptedException
    */
   public HttpResponse<String> pushFileContainerContentToStreamSource(
-      String sourceId, FileContainer fileContainer) throws IOException, InterruptedException {
+          String sourceId, FileContainer fileContainer) throws IOException, InterruptedException {
     String[] headers =
-        this.getHeaders(this.getAuthorizationHeader(), this.getContentTypeApplicationJSONHeader());
+            this.getHeaders(this.getAuthorizationHeader(), this.getContentTypeApplicationJSONHeader());
     URI uri =
-        URI.create(
-            this.getBasePushURL()
-                + String.format(
-                    "/sources/%s/stream/update?fileId=%s", sourceId, fileContainer.fileId));
+            URI.create(
+                    this.getBasePushURL()
+                            + String.format(
+                            "/sources/%s/stream/update?fileId=%s", sourceId, fileContainer.fileId));
+
+    return this.api.put(uri, headers, HttpRequest.BodyPublishers.ofString(""));
+  }
+
+  /**
+   * Push a file container with shallow merge operations to a catalog source.
+   * Uses the stream/merge endpoint for catalog sources with addOrMerge operations.
+   * See [Shallow Merge Operations](https://docs.coveo.com/en/p4eb0515/coveo-for-commerce/partial-catalog-data-updates#shallow-merge-operations).
+   *
+   * @param sourceId The catalog source ID
+   * @param fileContainer The file container with shallow merge data
+   * @return HTTP response from the API
+   * @throws IOException If the request fails
+   * @throws InterruptedException If the request is interrupted
+   */
+  public HttpResponse<String> pushFileContainerContentToStreamSourceForMerge(
+          String sourceId, FileContainer fileContainer) throws IOException, InterruptedException {
+    String[] headers =
+            this.getHeaders(this.getAuthorizationHeader(), this.getContentTypeApplicationJSONHeader());
+    URI uri =
+            URI.create(
+                    this.getBasePushURL()
+                            + String.format(
+                            "/sources/%s/stream/merge?fileId=%s", sourceId, fileContainer.fileId));
 
     return this.api.put(uri, headers, HttpRequest.BodyPublishers.ofString(""));
   }
@@ -510,9 +534,9 @@ public class PlatformClient {
    * @throws InterruptedException
    */
   public HttpResponse<String> pushBinaryToFileContainer(
-      FileContainer fileContainer, byte[] fileAsBytes) throws IOException, InterruptedException {
+          FileContainer fileContainer, byte[] fileAsBytes) throws IOException, InterruptedException {
     String[] headers =
-        this.getHeaders(this.getAes256Header(), this.getContentTypeApplicationOctetStreamHeader());
+            this.getHeaders(this.getAes256Header(), this.getContentTypeApplicationOctetStreamHeader());
 
     URI uri = URI.create(fileContainer.uploadUri);
 
@@ -525,12 +549,12 @@ public class PlatformClient {
 
   private String getBasePlatformURL() {
     return String.format(
-        "%s/rest/organizations/%s", this.platformUrl.getPlatformUrl(), this.organizationId);
+            "%s/rest/organizations/%s", this.platformUrl.getPlatformUrl(), this.organizationId);
   }
 
   private String getBasePushURL() {
     return String.format(
-        "%s/push/v1/organizations/%s", this.platformUrl.getApiUrl(), this.organizationId);
+            "%s/push/v1/organizations/%s", this.platformUrl.getApiUrl(), this.organizationId);
   }
 
   private String getBaseProviderURL(String providerId) {
@@ -559,12 +583,12 @@ public class PlatformClient {
     }
 
     return new String[] {
-      "Content-Type",
-      "application/json",
-      "Accept",
-      "application/json",
-      "User-Agent",
-      userAgentValue.toString()
+            "Content-Type",
+            "application/json",
+            "Accept",
+            "application/json",
+            "User-Agent",
+            userAgentValue.toString()
     };
   }
 

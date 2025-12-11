@@ -13,7 +13,7 @@ import static com.coveo.pushapiclient.BackoffOptionsBuilder.DEFAULT_RETRY_AFTER;
 
 public class UpdateStreamService {
 
-    private static final Logger LOG = Logger.getLogger(UpdateStreamService.class);
+    private static final Logger LOG = Logger.getLogger(com.coveo.pushapiclient.UpdateStreamService.class);
 
     PlatformClient platformClient;
     UpdateStreamServiceInternal updateStreamServiceInternal;
@@ -49,11 +49,11 @@ public class UpdateStreamService {
 
         this.platformClient = new PlatformClient(source.getApiKey(), source.getOrganizationId(), source.getPlatformUrl(), backoffOptions);
         this.platformClient.setUserAgents(userAgents);
-        
-        StreamDocumentUploadQueue queue = useCatalogQueue 
-            ? new CatalogDocumentUploadQueue(this.getUploadStrategy())
-            : new StreamDocumentUploadQueue(this.getUploadStrategy());
-            
+
+        StreamDocumentUploadQueue queue = useCatalogQueue
+                ? new CatalogDocumentUploadQueue(this.getUploadStrategy())
+                : new StreamDocumentUploadQueue(this.getUploadStrategy());
+
         this.updateStreamServiceInternal = new UpdateStreamServiceInternal(queue);
         this.sourceId = source.getId();
     }
@@ -65,7 +65,7 @@ public class UpdateStreamService {
      * stream chunks whenever the data payload exceeds the <a href="https://docs.coveo.com/en/lb4a0344#stream-api-limits">batch size limit</a> set for the Stream API.
      *
      * <p>Once there are no more documents to add, it is important to call the {@link
-     * UpdateStreamService#close} function in order to send any buffered documents and push the file container. Otherwise, changes will not be reflected in the index.
+     * com.coveo.pushapiclient.UpdateStreamService#close} function in order to send any buffered documents and push the file container. Otherwise, changes will not be reflected in the index.
      *
      * <p>
      *
@@ -100,7 +100,7 @@ public class UpdateStreamService {
      * stream chunks whenever the data payload exceeds the <a href="https://docs.coveo.com/en/lb4a0344#stream-api-limits">batch size limit</a> set for the Stream API.
      *
      * <p>Once there are no more documents to add, it is important to call the {@link
-     * UpdateStreamService#close} function in order to send any buffered documents and push the file container. Otherwise, changes will not be reflected in the index.
+     * com.coveo.pushapiclient.UpdateStreamService#close} function in order to send any buffered documents and push the file container. Otherwise, changes will not be reflected in the index.
      *
      * <p>
      *
@@ -129,10 +129,10 @@ public class UpdateStreamService {
 
     /**
      * Adds a document to be shallow merged (addOrMerge operation). If there is no file container open to receive the documents, this function will open a file container before uploading the shallow merge details into it.
-     * 
+     *
      * <p>A shallow merge updates one or more fields in an item. If the item doesn't exist, it will be created. 
      * If a specified field is missing, it will be added. This operation is specific to Catalog sources.
-     * 
+     *
      * <p><strong>Important:</strong> When performing a shallow merge on an existing dictionary field, the entire value 
      * of the field is replaced. Use partial update operations instead to append or remove values from a dictionary field.
      *
@@ -140,7 +140,7 @@ public class UpdateStreamService {
      * stream chunks whenever the data payload exceeds the <a href="https://docs.coveo.com/en/lb4a0344#stream-api-limits">batch size limit</a> set for the Stream API.
      *
      * <p>Once there are no more documents to add, it is important to call the {@link
-     * UpdateStreamService#close} function in order to send any buffered documents and push the file container. Otherwise, changes will not be reflected in the index.
+     * com.coveo.pushapiclient.UpdateStreamService#close} function in order to send any buffered documents and push the file container. Otherwise, changes will not be reflected in the index.
      *
      * <p>
      *
@@ -175,7 +175,7 @@ public class UpdateStreamService {
      * stream chunks whenever the data payload exceeds the <a href="https://docs.coveo.com/en/lb4a0344#stream-api-limits">batch size limit</a> set for the Stream API.
      *
      * <p>Once there are no more documents to add, it is important to call the {@link
-     * UpdateStreamService#close} function in order to send any buffered documents and push the file container. Otherwise, changes will not be reflected in the index.
+     * com.coveo.pushapiclient.UpdateStreamService#close} function in order to send any buffered documents and push the file container. Otherwise, changes will not be reflected in the index.
      *
      * <p>
      *
@@ -225,17 +225,26 @@ public class UpdateStreamService {
         return streamUpdate -> {
             // Use toJsonObject() for StreamUpdateRecord to get correct field names (addOrUpdate vs addOrMerge)
             String batchUpdateJson;
+            boolean isShallowMerge = false;
+
             if (streamUpdate.marshal() instanceof StreamUpdateRecord) {
                 StreamUpdateRecord record = (StreamUpdateRecord) streamUpdate.marshal();
                 batchUpdateJson = new Gson().toJson(record.toJsonObject());
+                isShallowMerge = record.isUseAddOrMerge();
             } else {
                 batchUpdateJson = new Gson().toJson(streamUpdate.marshal());
             }
-            
+
             HttpResponse<String> response = this.platformClient.createFileContainer();
             FileContainer fileContainer = new Gson().fromJson(response.body(), FileContainer.class);
             this.platformClient.uploadContentToFileContainer(fileContainer, batchUpdateJson);
-            return this.platformClient.pushFileContainerContentToStreamSource(this.sourceId, fileContainer);
+
+            // Use stream/merge endpoint for shallow merge operations (addOrMerge), stream/update for regular updates
+            if (isShallowMerge) {
+                return this.platformClient.pushFileContainerContentToStreamSourceForMerge(this.sourceId, fileContainer);
+            } else {
+                return this.platformClient.pushFileContainerContentToStreamSource(this.sourceId, fileContainer);
+            }
         };
     }
 }
