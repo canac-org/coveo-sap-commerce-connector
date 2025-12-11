@@ -31,7 +31,7 @@ import static com.coveo.constants.SearchprovidercoveosearchservicesConstants.*;
 
 public class CoveoProductStreamServiceStrategy<T extends CoveoStreamService> implements CoveoStreamServiceStrategy {
 
-    private static final Logger LOG = Logger.getLogger(CoveoProductStreamServiceStrategy.class);
+    private static final Logger LOG = Logger.getLogger(com.coveo.stream.service.impl.CoveoProductStreamServiceStrategy.class);
 
     private static final String COVEO_VIRTUAL_GROUP_NAME = Config.getString("canac.coveo.virtual.group.name", "internal");
     private static final String PARTIAL_UPDATE = "PARTIAL_UPDATE";
@@ -119,7 +119,23 @@ public class CoveoProductStreamServiceStrategy<T extends CoveoStreamService> imp
         }
         if (isApplicableForCountry(request, language, currency, country)) {
             synchronized (streamService) {
-                if (SHALLOW_MERGE.equals(request.getOperationType().getCode())) {
+                if (PARTIAL_UPDATE.equals(request.getOperationType().getCode())) {
+                    List<PartialUpdateDocument> partialUpdateDocuments = createCoveoPartialDocument(request.getDocument(), language.getId(), currency.getId());
+                    if (!partialUpdateDocuments.isEmpty()) {
+                        try {
+                            if (LOG.isDebugEnabled()) {
+                                LOG.debug("Pushing partial update for document " + request.getDocument().getId());
+                            }
+                            streamService.pushPartialDocument(partialUpdateDocuments);
+                        } catch (IOException | InterruptedException exception) {
+                            success = false;
+                            LOG.error("Failed to index " + request.getDocument().getId(), exception);
+                        }
+                    } else {
+                        LOG.error("Failed to index " + request.getDocument().getId());
+                        success = false;
+                    }
+                } else if (SHALLOW_MERGE.equals(request.getOperationType().getCode())) {
                     List<ShallowMergeDocument> shallowMergeDocuments = createCoveoShallowMergeDocument(request.getDocument(), language.getId(), currency.getId());
                     if (!shallowMergeDocuments.isEmpty()) {
                         try {
@@ -190,7 +206,7 @@ public class CoveoProductStreamServiceStrategy<T extends CoveoStreamService> imp
     }
 
     private DocumentBuilder createCoveoDocument(SnDocument document, String languageIsoCode, String currencyIsoCode) {
-        DocumentInfos documentInfos = getInfosAndValidateDocument(document, languageIsoCode, currencyIsoCode);
+        com.coveo.stream.service.impl.CoveoProductStreamServiceStrategy.DocumentInfos documentInfos = getInfosAndValidateDocument(document, languageIsoCode, currencyIsoCode);
         if (!documentInfos.isValid()) {
             return null;
         }
@@ -213,7 +229,7 @@ public class CoveoProductStreamServiceStrategy<T extends CoveoStreamService> imp
     }
 
     private List<PartialUpdateDocument> createCoveoPartialDocument(SnDocument document, String languageIsoCode, String currencyIsoCode) {
-        DocumentInfos documentInfos = getInfosAndValidateDocument(document, languageIsoCode, currencyIsoCode);
+        com.coveo.stream.service.impl.CoveoProductStreamServiceStrategy.DocumentInfos documentInfos = getInfosAndValidateDocument(document, languageIsoCode, currencyIsoCode);
         if (!documentInfos.isValid()) {
             return new ArrayList<>();
         }
@@ -230,7 +246,7 @@ public class CoveoProductStreamServiceStrategy<T extends CoveoStreamService> imp
     }
 
     private List<ShallowMergeDocument> createCoveoShallowMergeDocument(SnDocument document, String languageIsoCode, String currencyIsoCode) {
-        DocumentInfos documentInfos = getInfosAndValidateDocument(document, languageIsoCode, currencyIsoCode);
+        com.coveo.stream.service.impl.CoveoProductStreamServiceStrategy.DocumentInfos documentInfos = getInfosAndValidateDocument(document, languageIsoCode, currencyIsoCode);
         if (!documentInfos.isValid()) {
             return new ArrayList<>();
         }
@@ -262,7 +278,7 @@ public class CoveoProductStreamServiceStrategy<T extends CoveoStreamService> imp
         return shallowMergeDocuments;
     }
 
-    private Map<String, Object> resolveFieldValue(SnDocument document, DocumentInfos documentInfo) {
+    private Map<String, Object> resolveFieldValue(SnDocument document, com.coveo.stream.service.impl.CoveoProductStreamServiceStrategy.DocumentInfos documentInfo) {
         Map<String, Object> values = new HashMap<>();
         for (Map.Entry<String, Object> field : document.getFields().entrySet()) {
             updateValues(values, field, documentInfo);
@@ -270,7 +286,7 @@ public class CoveoProductStreamServiceStrategy<T extends CoveoStreamService> imp
         return values;
     }
 
-    private Map<String, Object> resolvePartialFieldValue(SnDocument document, DocumentInfos documentInfo, String currentField) {
+    private Map<String, Object> resolvePartialFieldValue(SnDocument document, com.coveo.stream.service.impl.CoveoProductStreamServiceStrategy.DocumentInfos documentInfo, String currentField) {
         Map<String, Object> values = new HashMap<>();
         List<String> fieldsToResolve = new ArrayList<>();
         fieldsToResolve.add(currentField);
@@ -285,7 +301,7 @@ public class CoveoProductStreamServiceStrategy<T extends CoveoStreamService> imp
         return values;
     }
 
-    private void updateValues(Map<String, Object> values, Map.Entry<String, Object> field, DocumentInfos documentInfo) {
+    private void updateValues(Map<String, Object> values, Map.Entry<String, Object> field, com.coveo.stream.service.impl.CoveoProductStreamServiceStrategy.DocumentInfos documentInfo) {
         Object fieldValue = CoveoFieldValueResolverUtils.resolveFieldValue(field.getValue(), documentInfo.locale(), documentInfo.currency());
         if (fieldValue != null && !Objects.equals(fieldValue, "")) {
             values.put(field.getKey(), fieldValue);
@@ -294,7 +310,7 @@ public class CoveoProductStreamServiceStrategy<T extends CoveoStreamService> imp
         }
     }
 
-    private DocumentInfos getInfosAndValidateDocument(SnDocument document, String languageIsoCode, String currencyIsoCode) {
+    private com.coveo.stream.service.impl.CoveoProductStreamServiceStrategy.DocumentInfos getInfosAndValidateDocument(SnDocument document, String languageIsoCode, String currencyIsoCode) {
         Locale locale = commonI18NService.getLocaleForIsoCode(languageIsoCode);
         Currency currency = Currency.getInstance(currencyIsoCode);
         Map<String, Object> documentFields = document.getFields();
@@ -302,16 +318,16 @@ public class CoveoProductStreamServiceStrategy<T extends CoveoStreamService> imp
         String documentId = (String) CoveoFieldValueResolverUtils.resolveFieldValue(COVEO_DOCUMENT_ID_INDEX_ATTRIBUTE, documentFields, locale, currency);
         if (StringUtils.isBlank(documentId)) {
             LOG.warn("SnDocument with id " + document.getId() + " does not have a " + COVEO_DOCUMENT_ID_INDEX_ATTRIBUTE + " field, will not push this document");
-            return new DocumentInfos(false, null, null, null, null);
+            return new com.coveo.stream.service.impl.CoveoProductStreamServiceStrategy.DocumentInfos(false, null, null, null, null);
         }
 
         String documentName = (String) CoveoFieldValueResolverUtils.resolveFieldValue("name", documentFields, locale, currency);
         if (StringUtils.isBlank(documentName)) {
             LOG.warn("SnDocument with id " + document.getId() + " does not have a name field, will not push this document");
-            return new DocumentInfos(false, null, null, null, null);
+            return new com.coveo.stream.service.impl.CoveoProductStreamServiceStrategy.DocumentInfos(false, null, null, null, null);
         }
 
-        return new DocumentInfos(true, documentId, documentName, locale, currency);
+        return new com.coveo.stream.service.impl.CoveoProductStreamServiceStrategy.DocumentInfos(true, documentId, documentName, locale, currency);
     }
 
     @Override
