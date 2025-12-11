@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<!--
+ Copyright (c) 2021 SAP SE or an SAP affiliate company. All rights reserved.
+-->
+<config xmlns:wz="http://www.hybris.com/cockpitng/config/wizard-config"
+        xmlns:df="http://www.hybris.com/cockpitng/component/dynamicForms"
+        xmlns="http://www.hybris.com/cockpit/config">
+
+    <context type="SnIndexerItemSourceOperation">
+        <context merge-by="type" parent="GenericItem" component="editorAreaDynamicForms">
+            <df:dynamicForms>
+                <df:attribute id="fieldsVisible" qualifier="fields"
+                              visibleIf="documentOperationType != null &amp;&amp; (documentOperationType.getCode().equals('PARTIAL_UPDATE') &#124;&#124; documentOperationType.getCode().equals('SHALLOW_MERGE'))"
+                              triggeredOn="*"/>
+            </df:dynamicForms>
+        </context>
+
+        <context component="create-wizard">
+            <wz:flow id="snindexercronjob-create-wizard" title="create.title(ctx.TYPE_CODE)">
+                <wz:handler handlerBean="" handlerId="">
+                    <wz:additionalParams/>
+                </wz:handler>
+                <wz:prepare id="prepare">
+                    <wz:initialize property="newItem" type="ctx.TYPE_CODE"/>
+                    <wz:assign property="newItem.cronJob" value="ctx.parentObject"/>
+                </wz:prepare>
+                <wz:step id="step1" label="create.snindexeritemsourceoperation.essential.label"
+                         sublabel="create.snindexeritemsourceoperation.essential.sublabel">
+                    <wz:content id="step1.content">
+                        <wz:property-list root="newItem">
+                            <wz:property qualifier="documentOperationType"/>
+                            <wz:property qualifier="indexerItemSource">
+                                <wz:editor-parameter>
+                                    <wz:name>isNestedObjectCreationDisabled</wz:name>
+                                    <wz:value>false</wz:value>
+                                </wz:editor-parameter>
+                            </wz:property>
+                            <wz:property qualifier="fields">
+                                <wz:editor-parameter>
+                                    <wz:name>isNestedObjectCreationDisabled</wz:name>
+                                    <wz:value>true</wz:value>
+                                </wz:editor-parameter>
+                                <wz:editor-parameter>
+                                    <wz:name>referenceSearchCondition_indexType</wz:name>
+                                    <wz:value>{parentObject.cronJob.indexType}</wz:value>
+                                </wz:editor-parameter>
+                            </wz:property>
+                        </wz:property-list>
+                    </wz:content>
+                    <wz:navigation id="step1.navigation">
+                        <wz:cancel/>
+                        <wz:done
+                                visible="newItem.documentOperationType != null AND newItem.indexerItemSource != null AND ((!newItem.documentOperationType.getCode().equals('PARTIAL_UPDATE') AND !newItem.documentOperationType.getCode().equals('SHALLOW_MERGE'))OR newItem.fields?.size() > 0)">
+                            <wz:save property="newItem"/>
+                        </wz:done>
+                    </wz:navigation>
+                </wz:step>
+            </wz:flow>
+        </context>
+
+        <context merge-by="type" parent="GenericItem" component="configurableFlowDynamicForms">
+            <df:dynamicForms modelProperty="newItem">
+                <df:attribute id="fieldsVisible" qualifier="fields"
+                              visibleIf="documentOperationType != null &amp;&amp; (documentOperationType.getCode().equals('PARTIAL_UPDATE') &#124;&#124; documentOperationType.getCode().equals('SHALLOW_MERGE'))"
+                              triggeredOn="*"/>
+            </df:dynamicForms>
+        </context>
+    </context>
+
+</config>
