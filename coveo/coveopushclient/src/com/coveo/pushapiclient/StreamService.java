@@ -126,7 +126,16 @@ public class StreamService {
           this.platformClient.requireStreamChunk(sourceId, this.streamId);
       FileContainer fileContainer =
           new Gson().fromJson(resFileContainer.body(), FileContainer.class);
-      String batchUpdateJson = new Gson().toJson(batchUpdate.marshal());
+      
+      // Use toJsonObject() for StreamUpdateRecord to get correct field names (addOrUpdate vs addOrMerge)
+      String batchUpdateJson;
+      if (batchUpdate.marshal() instanceof StreamUpdateRecord) {
+        StreamUpdateRecord record = (StreamUpdateRecord) batchUpdate.marshal();
+        batchUpdateJson = new Gson().toJson(record.toJsonObject());
+      } else {
+        batchUpdateJson = new Gson().toJson(batchUpdate.marshal());
+      }
+      
       return this.platformClient.uploadContentToFileContainer(fileContainer, batchUpdateJson);
     };
   }
