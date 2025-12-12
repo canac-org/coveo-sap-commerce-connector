@@ -87,7 +87,7 @@ public class DefaultSearchTokenFacade implements SearchTokenFacade {
             userPriceGroupIds.add(user.getEurope1PriceFactory_UPG().getCode());
         }
 
-        Set<UserGroupModel> userGroups = getUserService().getAllUserGroupsForUser(getUserService().getUserForUID(userId));
+        Set<UserGroupModel> userGroups = getUserService().getAllUserGroupsForUser(user);
         userGroups.stream().map(UserGroupModel::getUserPriceGroup).filter(Objects::nonNull).map(UserPriceGroup::getCode).forEach(userPriceGroupIds::add);
         return userPriceGroupIds;
     }

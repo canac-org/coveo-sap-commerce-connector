@@ -49,7 +49,6 @@ public class StreamUpdateRecord extends BatchUpdateRecord {
    * @return JsonObject representation with correct field names for the API.
    */
   public JsonObject toJsonObject() {
-    Gson gson = new Gson();
     JsonObject result = new JsonObject();
 
     // Use appropriate field name based on source type
